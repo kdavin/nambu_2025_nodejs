@@ -31,7 +31,7 @@ app.post("/books", (req, res) => {
     author,
   };
   books.push(book); //push 배열에 book 객체 추가
-  res.status(200).json(book);
+  res.status(201).json(book);
 });
 
 //http ://localhost:3000/books/1
