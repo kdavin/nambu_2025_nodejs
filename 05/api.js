@@ -42,9 +42,12 @@ app.post("/posts", (req, res) => {
 });
 //게시글 목록 조회 http://localhost:3000/posts GET
 app.get("/posts", (req, res) => {
+  const page = req.query.page ? parseInt(req.query.page) : 1;
+  const limit = 5;
+  const offset = (page - 1) * limit;
   let sql = `
         select id, title, content, author, createdAt
-        from posts order by createdAt desc
+        from posts order by createdAt desc limit ? offset ?
     `;
   const stmt = db.prepare(sql); //쿼리를 준비하세요
   const rows = stmt.all(); //쿼리를 날려주세요 //쿼리를 실행하고 결과는 [] 배열로 반환해주세요
@@ -58,6 +61,8 @@ app.get("/posts/:id", (req, res) => {
   let sql = `
         select id, title, content, author, createdAt,count from posts where id = ?
     `;
+  let ac_sql = `update posts set count = count + 1 where id = ?`;
+  db.prepare(ac_sql).run(id);
   const stmt = db.prepare(sql); //select 쿼리문이 준비 완료
   const post = stmt.get(id); //실제 쿼리문이 실행
   res.status(200).json({ data: post });
