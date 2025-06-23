@@ -13,6 +13,10 @@ const app = express(); //app 이란 변수에 express 함수를 담습니다. ap
 const PORT = 3000; //포트 설정
 app.use(express.json()); //json 포맷이 아니라고 받아들이면 에러를 발생시킴 //app.use 미들웨어를 설정하는거에요. 모든 요청과 응답에 json 포멧을 처리한다.
 
+app.use((req, res, next) => {
+  console.log("나의 첫번째 미들웨어");
+  next(); //모든 라우터에 중간동작을 넣고 싶을 때..?
+});
 // 1. post.db 게시판 전용 테이블을 만들어야합니다.
 const create_sql = `
     create table if not exists posts (
@@ -37,17 +41,19 @@ db.exec(create_sql); //exec sql을 실행시킨다.
 //app.post => POST 요청을 처리한다. http://my-url/posts PORT -> 두번째인자의 핸들러함수실행
 app.post("/posts", (req, res) => {
   const { title, content, author } = req.body; //요청 본문에서 title, content, author : json 포멧
+  const createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
   let sql = `
         insert into posts(title, content, author)
         values ( ?,?,?);
     `;
   //insert 쿼리문을 만들어 준다.
   const stmt = db.prepare(sql); //문자열 sql 실제 쿼리문으로 파싱합니다. statement 객체로 만듬 //재활용성 극대화
-  db.prepare(sql).run(title, content, author);
+  const result = stmt.run(title, content, author, createdAt); //insert into posts -> 자동증가된 id가 변환 :lastInsertRowid
+  db.prepare(sql).run(title, content, author, createdAt);
   const newPost = db
     .prepare(`select * from posts where id = ?`)
     .get(result.lastInsertRowid);
-  stmt.run(title, content, author);
+  stmt.run(title, content, author, createdAt);
   // stmt.run : UPDATE, INSERT, DELETE
   // stmt.all : SELETE * FROM TABLE or SELECT * FROM TABLE WHERE --> [] 배열로 값을 반환
   // stmt.get : SELETE * FROM TABLE LIMIT 1 --> {} 객체로 값을 반환
@@ -156,5 +162,43 @@ app.get("/posts/:id/comments", (req, res) => {
   });
 });
 
+//답글 삭제
+app.delete("/posts/:postId/comments/:commentId", (req, res) => {
+  const { postId, commentId } = req.params;
+  const comment = db
+    .prepare(`select id from comments where postId = ? and id = ?`)
+    .get(postId, commentId);
+  if (!comment) {
+    return res.status(404).json({ message: "댓글을 찾을 수 없어요" });
+  }
+  const sql = `delete from comments where id = ?`;
+  db.prepare(sql).run(commentId);
+  res.status(204).end();
+});
+
+//답글 수정(부분 업데이트)
+app.put("/posts/:postId/comments/:commentId", (req, res) => {
+  const { postId, commentId } = req.params;
+  const { author, content } = req.body;
+
+  const comment = db
+    .prepare(`select * from comments where postId = ? and id = ?`)
+    .get(postId, commentId);
+  if (!comment) {
+    return res.status(404).json({ message: "댓글이 없어용" });
+  }
+  const newAuthor = author !== undefined ? author : comment.author;
+  const newContent = content !== undefined ? content : comment.content;
+
+  db.prepare(`update comments set author = ?, content = ? where id = ?`).run(
+    newAuthor,
+    newContent,
+    commentId
+  );
+  const updatedComment = db
+    .prepare(`select * from comments where id = ?`)
+    .get(commentId);
+  res.status(200).json({ message: "ok", data: updatedComment });
+});
 // server start
 app.listen(PORT, () => {});
