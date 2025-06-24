@@ -1,0 +1,30 @@
+{
+  "id": 2,
+  "username": "트럼프",
+  "email": "trump@email.com",
+  "password": "12345678",
+  "age": 87,
+  "status": "active",
+  "createdAt": "2025-06-24T07:19:06.400Z",
+  "updatedAt": "2025-06-24T07:19:06.400Z",
+  "posts": [
+    {
+      "id": 1,
+      "title": "이란은 언제 공격을 중단할까요?",
+      "content": "니네들이 중단하면 우리도 중단한다.",
+      "count": 0,
+      "createdAt": "2025-06-24T07:19:06.401Z",
+      "updatedAt": "2025-06-24T07:19:06.401Z",
+      "authorId": 2
+    },
+    {
+      "id": 2,
+      "title": "닭도리탕이 먹고싶어요 오늘저녁은...",
+      "content": "감자와 수제비도 넣어서 먹고 싶어여",
+      "count": 0,
+      "createdAt": "2025-06-24T07:19:06.401Z",
+      "updatedAt": "2025-06-24T07:19:06.401Z",
+      "authorId": 2
+    }
+  ]
+}
