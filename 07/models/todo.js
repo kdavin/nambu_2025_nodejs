@@ -25,4 +25,5 @@ module.exports = (sequelize, DataTypes) => {
       tableName: "todos",
     }
   );
+  return Todo; //모델 네임을 찾기 위해 반드시 필요
 };
