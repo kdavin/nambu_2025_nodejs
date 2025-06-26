@@ -1,8 +1,20 @@
 const express = require("express");
 const models = require("./models");
+//멀터 임포트
+const multer = require("multer");
 const app = express();
 const PORT = 3000;
 app.use(express.json());
+//멀터 formdata, multi part forma 데이터를 받기 위한 미들웨어 설정
+app.use(express.urlencoded({ extended: true }));
+const uploadDir = `public/uploads`;
+app.use(`/downloads`, express.static(Path2D.join(__dirname, uploadDir)));
+//http://localhost:3000/downloads/aa.png
+
+//멀터 저장소 설정
+const storage = multer.diskStorage({
+  destination: `./${uploadDir}`, // 요
+});
 //route add
 app.post("/posts", async (req, res) => {
   const { title, content } = req.body;
@@ -109,11 +121,53 @@ app.get("/posts/:postId/comments", async (req, res) => {
   });
   res.status(200).json({ message: "ok", data: comments });
 });
+//comment 수정
+app.put("/posts/:postId/comments/:id", async (req, res) => {
+  const postId = req.params.postId;
+  const commentId = req.params.id;
+  const { content } = req.body;
+
+  //1.게시물이 있는지 확인
+  const post = await models.Post.findByPk(postId);
+  if (!post) {
+    return res.status(404).json({ message: "post not fonund" });
+  }
+  //2. 댓글을 가지고 오기
+  const comment = await models.Comment.findOne({
+    where: {
+      id: commentId,
+      postId: postId,
+    },
+  });
+  if (!comment) {
+    return res.status(404).json({ message: "comment not found" });
+  }
+  //3. 댓글 수정 및 저장
+  if (content) comment.content = content;
+  await comment.save();
+  res.status(200).json({ message: "ok", data: comment });
+});
 //comment 삭제
-// app.delete("/posts/:postId/comments/:commentId",(req,res)=>{
-//     const postId = req.params.postId;
-//     const
-// })
+app.delete("/posts/:postId/comments/:id", async (req, res) => {
+  const postId = req.params.postId;
+  const commentId = req.params.id;
+  //1.게시물 존재확인
+  if (!postId) {
+    return res.status(404).json({ message: "post not found" });
+  }
+  //2. 댓글 삭제
+  const result = await models.Comment.destroy({
+    where: {
+      id: commentId,
+      postId: postId,
+    },
+  });
+  if (result > 0) {
+    res.status(204).send();
+  } else {
+    res.status(404).json({ message: "comment not found" });
+  }
+});
 app.listen(PORT, () => {
   console.log(`post 서버가 http://localhost:${PORT}에서 실행중`);
   models.sequelize
