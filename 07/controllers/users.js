@@ -1,0 +1,31 @@
+const models = require("../models");
+
+const createUser = async (req, res) => {
+  const { email, password, name } = req.body;
+  const user = await models.User.create({
+    name,
+    email,
+    password,
+  });
+  res.status(201).json({ message: "ok", data: user });
+};
+
+const findAll = async (req, res) => {
+  const users = await models.User.findAll();
+  res.status(200).json({ message: "ok", data: users });
+};
+// PUT http://localhost:3000/users/12
+const updateUser = async (req, res) => {
+  const { password, name } = req.body;
+  const id = req.params.id;
+  const user = await models.User.findByPk(id);
+  if (user) {
+    if (password) user.password = password;
+    if (name) user.name = name;
+    await user.save();
+    res.status(200).json({ message: "ok", data: user });
+  } else {
+    res.status(404).json({ message: "user not found" });
+  }
+};
+const deleteUser = async (req, res) => {};
