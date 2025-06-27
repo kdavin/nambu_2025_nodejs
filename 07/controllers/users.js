@@ -28,4 +28,26 @@ const updateUser = async (req, res) => {
     res.status(404).json({ message: "user not found" });
   }
 };
-const deleteUser = async (req, res) => {};
+const deleteUser = async (req, res) => {
+  const id = req.params.id;
+  const result = await models.User.destroy({ where: { id: id } });
+  if (result) {
+    res.status(200).json({ message: "ok" });
+  } else {
+    res.status(404).json({ message: "user not found" });
+  }
+};
+// login에 사용
+const findUserByEmail = async (email) => {
+  const user = await models.User.findOne({
+    where: { email: email },
+  });
+  return user;
+};
+module.exports = {
+  createUser,
+  findAll,
+  updateUser,
+  deleteUser,
+  findUserByEmail,
+};
